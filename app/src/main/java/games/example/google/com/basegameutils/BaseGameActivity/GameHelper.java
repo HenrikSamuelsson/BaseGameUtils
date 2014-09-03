@@ -5,23 +5,35 @@ import android.content.Context;
 import android.os.Bundle;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.Api;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.games.Games;
+import com.google.android.gms.plus.Plus;
+
+import static com.google.android.gms.games.Games.*;
+import static com.google.android.gms.plus.Plus.*;
 
 /**
  * Created by Henrik Samuelsson on 2014-08-24.
  */
 public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
-    GoogleApiClient.OnConnectionFailedListener {
+        GoogleApiClient.OnConnectionFailedListener {
 
     static final String TAG = "GameHelper";
 
-    /** Listener for events indicating success or failure of sign-in attempts. */
+    /**
+     * Listener for events indicating success or failure of sign-in attempts.
+     */
     public interface GameHelperListener {
 
-        /** Called when sign-in fails. */
+        /**
+         * Called when sign-in fails.
+         */
         void onSignInFailed();
 
-        /** Called when sign-in succeeds. */
+        /**
+         * Called when sign-in succeeds.
+         */
         void onSignInSucceeded();
     }
 
@@ -56,6 +68,23 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
 
     // Google API client builder used to create a GoogleApiClient.
     GoogleApiClient.Builder mGoogleApiClientBuilder = null;
+
+    // API options to use when adding each API, null for none.
+    GamesOptions mGamesApiOptions = GamesOptions.builder().build();
+    PlusOptions mPlusApiOptions = null;
+    Api.ApiOptions.NoOptions mAppStateApiOptions = null;
+
+    // Google API client object that we manage.
+    GoogleApiClient mGoogleApiClient = null;
+
+    // Client request flags.
+    public final static int CLIENT_NONE = 0x00;
+    public final static int CLIENT_GAMEMS = 0x01;
+    public final static int CLIENT_PLUS = 0x02;
+    public final static int CLIENT_APPSTATE = 0x04;
+    public final static int CLIENT_SNAPSHOT = 0x08;
+    public final static int CLIENT_ALL = CLIENT_GAMEMS | CLIENT_PLUS | CLIENT_APPSTATE |
+            CLIENT_SNAPSHOT;
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
