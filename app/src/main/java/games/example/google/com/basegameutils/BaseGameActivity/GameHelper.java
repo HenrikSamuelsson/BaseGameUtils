@@ -102,6 +102,16 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
     public final static int CLIENT_ALL = CLIENT_GAMEMS | CLIENT_PLUS | CLIENT_APPSTATE |
             CLIENT_SNAPSHOT;
 
+    // What clients we requested, setup as bit flag representation.
+    int mRequestedClients = CLIENT_NONE;
+
+    /*
+     * Whether to automatically try to sign in on onStart(). We only set this to true when the
+     * sign-in process fails or the user explicitly signs out. We set it back to false when the
+     * user initiates the sign in process.
+     */
+    booolean mConnectOnStart = true;
+
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
