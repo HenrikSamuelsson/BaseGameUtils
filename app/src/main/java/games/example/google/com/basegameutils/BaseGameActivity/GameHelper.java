@@ -112,6 +112,27 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
      */
     booolean mConnectOnStart = true;
 
+    /*
+     * Whether user has specifically requested that the sign-in process begin. If false, then
+     * we are in the automatic sign-in attempt that we try once the Actiwity is started -- if true,
+     * then the user has already clicked a "Sign-in" button or similar.
+     */
+    boolean mUserInitiatedSignIn = false;
+
+    // The connection result we got from our last attempt to sign-in.
+    ConnectionResult mConnectionResult = null;
+
+    // Eventual error that happened during sign-in.
+    SignInFailureReason = mSignInFailureReason = null;
+
+    // Show error dialog boxes or not?
+    boolean mShowErrorDialogs = true;
+
+    // Print debug logs?
+    boolean mDebugLog = false;
+
+    Handler mHandler;
+
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
