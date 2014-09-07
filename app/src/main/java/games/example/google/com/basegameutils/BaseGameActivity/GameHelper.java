@@ -19,6 +19,7 @@ package games.example.google.com.basegameutils.BaseGameActivity;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.Api;
@@ -110,7 +111,7 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
      * sign-in process fails or the user explicitly signs out. We set it back to false when the
      * user initiates the sign in process.
      */
-    booolean mConnectOnStart = true;
+    boolean mConnectOnStart = true;
 
     /*
      * Whether user has specifically requested that the sign-in process begin. If false, then
@@ -123,7 +124,7 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
     ConnectionResult mConnectionResult = null;
 
     // Eventual error that happened during sign-in.
-    SignInFailureReason = mSignInFailureReason = null;
+    SignInFailureReason mSignInFailureReason = null;
 
     // Show error dialog boxes or not?
     boolean mShowErrorDialogs = true;
@@ -132,6 +133,76 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
     boolean mDebugLog = false;
 
     Handler mHandler;
+
+    /*
+     * If we got an invitation when we connected to the game client, it is here.
+     * Otherwise, it is null.
+     */
+    Invitation mInvitation;
+
+    /*
+     * If we got turn-based match when we connected to the game client, it is here.
+     * Otherwise, it is null.
+     */
+    TurnBasedMatch mTurnBasedMatch;
+
+    /*
+     * If we have incoming requests when we connected to the game client, they are here.
+     * Otherwise it is null.
+     */
+    ArrayList<GameRequest> mRequest;
+
+    // Listener
+    GameHelperListener mListener = null;
+
+    // Should we start the flow to sign the user in automatically on startup?
+    // If so, up to how many times in the life of the application?
+    static final int DEFAULT_MAX_SIGN_IN_ATTEMPTS = 3;
+    int mMaxAutoSignInAttempts = DEFAULT_MAX_SIGN_IN_ATTEMPTS;
+
+    /**
+     * Constructs a GameHelper object, initially tied to the given Activity.
+     * After constructing this object, call @link{setup} from the onCreate()
+     * method of your Activity.
+     *
+     * @param activity
+     *          the activity that the object constructed shall be tied to
+     * @param clientsToUse
+     *          the API clients to use, depending the on CLIENTS_* flags settings
+     */
+    public GameHelper(Activity activity, int clientsToUse) {
+        mActivity = activity;
+        mAppContext = activity.getApplicationContext();
+        mRequestedClients = clientsToUse;
+        mHandler = new Handler();
+    }
+
+    /**
+     * Sets the maximum number of automatic sign-in attempts to be made on
+     * application startup. This maximum is over the lifetime of the application
+     * (it is stored in a SharedPreferences file). So, for example, if you
+     * specify 2, then it means that the user will be prompted to sign in on app
+     * startup the first time and, if they cancel, a second time the next time
+     * the app starts, and, if they cancel that one, never again. Set to 0 if
+     * you do not want the user to be prompted to sign in on application
+     * startup.
+     *
+     * @param max
+     *      number of occasions a user will be requested to sign in
+     */
+    public void setMaxAutoSignAttempts(int max) {
+        mMaxAutoSignInAttempts = max;
+    }
+
+    void assertConfigured(String operation) {
+        if( !mSetupDone ) {
+            String error = "GameHelper error: Operation attempted withouth setup:"
+                    + operation
+                    + ". The setup() method must be called before attempting any other operation";
+            logError(error);
+            throw new IllegalStateException(error);
+        }
+    }
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
