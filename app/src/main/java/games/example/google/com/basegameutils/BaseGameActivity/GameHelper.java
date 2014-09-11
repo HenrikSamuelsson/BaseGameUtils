@@ -196,9 +196,19 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
 
     void assertConfigured(String operation) {
         if( !mSetupDone ) {
-            String error = "GameHelper error: Operation attempted withouth setup:"
+            String error = "GameHelper error: Operation attempted without setup:"
                     + operation
                     + ". The setup() method must be called before attempting any other operation";
+            logError(error);
+            throw new IllegalStateException(error);
+        }
+    }
+
+    private void doApiOptionPreCheck() {
+        if (mGoogleApiClientBuilder != null) {
+            String error = "GameHelper: you cannot call set*ApiOptions after the client " +
+                    "builder has been created. Call it before calling createApiClientBuilder() " +
+                    "or setup().";
             logError(error);
             throw new IllegalStateException(error);
         }
