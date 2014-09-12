@@ -25,10 +25,10 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.Api;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
-import com.google.android.gms.plus.Plus;
+import com.google.android.gms.plus.Plus.PlusOptions;
 
 import static com.google.android.gms.games.Games.*;
-import static com.google.android.gms.plus.Plus.*;
+
 
 /**
  * Created by Henrik Samuelsson on 2014-08-24.
@@ -212,6 +212,15 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
             logError(error);
             throw new IllegalStateException(error);
         }
+    }
+
+    /**
+     * Sets the options to pass when setting up the Plus API. Call before setup().
+     * @param options Plus API options to be used
+     */
+    public void setPlusApiOptions(PlusOptions options) {
+        doApiOptionPreCheck();
+        mPlusApiOptions = options;
     }
 
     @Override
