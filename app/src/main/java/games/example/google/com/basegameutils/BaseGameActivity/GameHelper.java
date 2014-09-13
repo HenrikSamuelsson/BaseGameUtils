@@ -215,6 +215,15 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
     }
 
     /**
+     * Sets the options to pass when setting up the Games API. Call before
+     * setup().
+     */
+    public void setGamesApiOptions(GamesOptions options) {
+        doApiOptionsPreCheck();
+        mGamesApiOptions = options;
+    }
+
+    /**
      * Sets the options to pass when setting up the Plus API. Call before setup().
      * @param options Plus API options to be used
      */
@@ -222,6 +231,17 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         doApiOptionPreCheck();
         mPlusApiOptions = options;
     }
+
+    /**
+     * Sets the options to pass when setting up the AppState API. Call before setup().
+     * @param options
+     */
+    public void setAppStateApiOptions(NoOptions options) {
+        doApiOptionPreCheck();
+        mAppStateApiOptions = options;
+    }
+
+
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
