@@ -21,10 +21,14 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 
+import com.google.android.gms.appstate.AppStateManager;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.Api;
+import com.google.android.gms.common.api.Api.ApiOptions.NoOptions;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.drive.Drive;
 import com.google.android.gms.games.Games;
+import com.google.android.gms.plus.Plus;
 import com.google.android.gms.plus.Plus.PlusOptions;
 
 import static com.google.android.gms.games.Games.*;
@@ -96,11 +100,11 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
 
     // Client request flags.
     public final static int CLIENT_NONE = 0x00;
-    public final static int CLIENT_GAMEMS = 0x01;
+    public final static int CLIENT_GAMES = 0x01;
     public final static int CLIENT_PLUS = 0x02;
     public final static int CLIENT_APPSTATE = 0x04;
     public final static int CLIENT_SNAPSHOT = 0x08;
-    public final static int CLIENT_ALL = CLIENT_GAMEMS | CLIENT_PLUS | CLIENT_APPSTATE |
+    public final static int CLIENT_ALL = CLIENT_GAMES | CLIENT_PLUS | CLIENT_APPSTATE |
             CLIENT_SNAPSHOT;
 
     // What clients we requested, setup as bit flag representation.
@@ -234,13 +238,88 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
 
     /**
      * Sets the options to pass when setting up the AppState API. Call before setup().
-     * @param options
+     * @param options AppState api options
      */
     public void setAppStateApiOptions(NoOptions options) {
         doApiOptionPreCheck();
         mAppStateApiOptions = options;
     }
 
+    /**
+     * Creates a GoogleApiClient.Builder for use with @link{#setup}. Normally, you do not have to
+     * do this; use this method only if you need to make nonstandard setup (e.g adding extra scopes
+     * for other APIs) on the GooglApiClient.Builder before calling @link{#setup}.
+     */
+    public GoogleApiClient.Builder createApiClentBuilder() {
+        if(mSetupDone) {
+            String error = "GameHelper: You called GameHelper.createApiClientBuilder() after "
+                    + "calling setup. You can only get a client builder BEFORE performing setup";
+            logError(error);
+            throw new IllegalStateException(error);
+        }
+
+        GoogleApiClient.Builder builder = new GoogleApiClient.Builder(mActivity, this, this);
+
+        if (0 != (mRequestedClients & CLIENT_GAMES)) {
+            builder.addApi(Games.API, mGamesApiOptions);
+            builder.addScope(Games.SCOPE_GAMES);
+        }
+
+        if (0 != (mRequestedClients & CLIENT_PLUS)) {
+            builder.addApi(Plus.API);
+            builder.addScope(Plus.SCOPE_PLUS_LOGIN);
+        }
+
+        if (0 != (mRequestedClients & CLIENT_APPSTATE)) {
+            builder.addApi(AppStateManager.API);
+            builder.addScope(AppStateManager.SCOPE_APP_STATE);
+        }
+
+        if (0 != (mRequestedClients & CLIENT_SNAPSHOT)) {
+            builder.addApi(Drive.API);
+            builder.addScope(Drive.SCOPE_APPFOLDER);
+        }
+
+        mGoogleApiClientBuilder = builder;
+        return builder;
+    }
+
+    /**
+     * Performs setup on this GameHelper object. Call this from onCreate() method of your Activity.
+     * This will create the clients and do a few other initialization tasks. Next, call
+     * &link{#onStart} from the onStart() method of your Activity.
+     *
+     * @param listener
+     *          The listener to be notified of sign-in events.
+     */
+    public void setup(GameHelperListener listener) {
+        if (mSetupDone) {
+            String error = "GameHelper: You cannot call GameHelper.setup() more than once!";
+            logError(error);
+            throw new IllegalStateException(error);
+        }
+        mListener = listener;
+        debugLog("Setup - Requested clients: mRequestedClients ");
+
+        if(mGoogleApiClientBuilder == null) {
+            createApiClentBuilder();
+        }
+
+        mGoogleApiClient = mGoogleApiClientBuilder.build();
+        mGoogleApiClientBuilder = null;
+        mSetupDone = true;
+    }
+
+    /**
+     * Getter for the GoogleApiClient object. @link{setup} must have been called before this method
+     * can be used.
+     */
+    public GoogleApiClient getApiClient() {
+        if (mGoogleApiClient == null) {
+            throw new IllegalStateException("No GoogleApiClient. Did you call setup()?");
+        }
+        return mGoogleApiClient;
+    }
 
 
     @Override
