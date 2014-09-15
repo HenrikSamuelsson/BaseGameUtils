@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 
 import com.google.android.gms.appstate.AppStateManager;
 import com.google.android.gms.common.ConnectionResult;
@@ -321,6 +322,81 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         return mGoogleApiClient;
     }
 
+    /** Returns whether or not the user is signed in. */
+    public boolean isSignedIn() {
+        return mGoogleApiClient != null && mGoogleApiClient.isConnected();
+    }
+
+    /** Returns whether or not we are currently connecting. */
+    public boolean isConnecting() {
+        return mConnecting;
+    }
+
+    /**
+     * Returns whether or not there was a (non-recoverable) error during the
+     * sign-in process.
+     */
+    public boolean hasSignInError() {
+        return mSignInFailureReason != null;
+    }
+
+    /**
+     * Returns the error that happened during the sign-in process, null if
+     * no error occurred.
+     */
+    public SignInFailureReason getSignInError() {
+        return mSignInFailureReason;
+    }
+
+    /** Set whether to show error dialogs or not. */
+    public void setShowErrorDialogs(boolean show) {
+        mShowErrorDialogs = show;
+    }
+
+    /** Call this method from your Activity's onStart(). */
+    public void onStart(Activity act) {
+        mActivity = act;
+        mAppContext = act.getApplicationContext();
+
+        debugLog("onStart");
+        assertConfigured("onStart");
+
+        if (mConnectOnStart) {
+            if (mGoogleApiClient.isConnected()) {
+                Log.w(TAG, "GameHelper: client was already connected on onStart()");
+            } else {
+                debugLog("Connecting client.");
+                mConnecting = true;
+                mGoogleApiClient.connect();
+            }
+        } else {
+            debugLog("Not attempting to connect because mConnectOnStart = false.");
+            debugLog("Instead, reporting a sign-in failure");
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    notifyListener(false);
+                }
+            }, 1000);
+        }
+    }
+
+    /** Call this method from your Activity's onStop(). */
+    public void onStop() {
+        debugLog("onStop");
+        assertConfigured("onStop");
+        if (mGoogleApiClient.isConnected()) {
+            debugLog("Disconnecting client due to onStop");
+            mGoogleApiClient.disconnect();
+        } else {
+            mDebugLog("Client already disconnected when we got onStop");
+        }
+        mConnecting = false;
+        mExpectingResolution = false;
+
+        // Let go of the Activity reference
+        mActivity = null;
+    }
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
@@ -335,5 +411,11 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
     @Override
     public void onConnectionSuspended(int i) {
 
+    }
+
+    void debugLog(String message) {
+        if (mDebugLog) {
+            Log.d(TAG, "GameHelper: " + message);
+        }
     }
 }
