@@ -398,6 +398,22 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         mActivity = null;
     }
 
+    /**
+     * Returns the invitation ID received through an invitation notification. This
+     * should be called from your GomeHelperListener´s
+     * {@link GameHelperListener#onSignInSucceeded} method, to check if there´s an
+     * invitation available. In that case, accept the invitation.
+     *
+     * @return The id of the invitation, or null if none was received.
+     */
+    public String getInvitationId() {
+        if (!mGoogleApiClient.isConnected()) {
+            Log.w(TAG, "Warning: getInvitationId() should only be called when signed in, "
+            + "that is, after getting onSignInSuceeded()" );
+        }
+        return mInvitation == null ? null : mInvitation.getInvitationId();
+    }
+
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
