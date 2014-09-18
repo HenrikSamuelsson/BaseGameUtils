@@ -155,7 +155,7 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
      * If we have incoming requests when we connected to the game client, they are here.
      * Otherwise it is null.
      */
-    ArrayList<GameRequest> mRequest;
+    ArrayList<GameRequest> mRequests;
 
     // Listener
     GameHelperListener mListener = null;
@@ -412,6 +412,30 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
             + "that is, after getting onSignInSuceeded()" );
         }
         return mInvitation == null ? null : mInvitation.getInvitationId();
+    }
+
+    public boolean hasInvitation() {
+        return mInvitation != null;
+    }
+
+    public boolean hasTurnBasedMatch() {
+        return mTurnBasedMatch != null;
+    }
+
+    public boolean hasRequest() {
+        return mRequests != null;
+    }
+
+    public void clearInvitation() {
+        mInvitation = null;
+    }
+
+    public void clearTurnBasedMatch() {
+        mTurnBasedMatch = null;
+    }
+
+    public void clearRequests() {
+        mRequests = null;
     }
 
     @Override
