@@ -29,6 +29,7 @@ import com.google.android.gms.common.api.Api.ApiOptions.NoOptions;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.drive.Drive;
 import com.google.android.gms.games.Games;
+import com.google.android.gms.games.multiplayer.turnbased.TurnBasedMatch;
 import com.google.android.gms.plus.Plus;
 import com.google.android.gms.plus.Plus.PlusOptions;
 
@@ -436,6 +437,21 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
 
     public void clearRequests() {
         mRequests = null;
+    }
+
+    /**
+     * Returns the TurnedBasedMatch received through an invitation notification. This should be
+     * called from your GameHelperListener´s {@link GameHelperListener#onSignInSucceeded} method,
+     * to check if there´s a match available.
+     *
+     * @return The match, or null if none was received.
+     */
+    public TurnBasedMatch getTurnBasedMatch() {
+        if (!mGoogleApiClient.isConnected()) {
+            Log.w(TAG, "Warning: getTurnBasedMatch() should only be called when signed in, "
+            + "that is. after getting onSignInSuceeded().");
+        }
+        return mTurnBasedMatch;
     }
 
     @Override
