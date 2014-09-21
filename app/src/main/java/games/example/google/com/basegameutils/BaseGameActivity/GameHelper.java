@@ -30,8 +30,11 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.drive.Drive;
 import com.google.android.gms.games.Games;
 import com.google.android.gms.games.multiplayer.turnbased.TurnBasedMatch;
+import com.google.android.gms.games.request.GameRequest;
 import com.google.android.gms.plus.Plus;
 import com.google.android.gms.plus.Plus.PlusOptions;
+
+import java.util.ArrayList;
 
 import static com.google.android.gms.games.Games.*;
 
@@ -454,6 +457,21 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         return mTurnBasedMatch;
     }
 
+    /**
+     * Returns the requests received through the onConnected bundle. This should be called from
+     * your GameHelperListener's {@link GameHelperListener#onSignInSucceeded()} method, to check
+     * if there are incoming requests that must be handled.
+     *
+     * @return The requests, or null if none were received.
+     */
+    public ArrayList<GameRequest> getRequests() {
+        if (!mGoogleApiClient.isConnected()) {
+            Log.w(TAG, "Warning: getRequests() should only be called when signed in, "
+            + "that is after getting onSignInSuceeded().");
+        }
+        return mRequests;
+    }
+
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
@@ -469,9 +487,30 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
 
     }
 
+    /** Enables debug logging. */
+    public void enableDebugLog(boolean enabled) {
+        mDebugLog = enabled;
+        if(enabled) {
+            debugLog("Debug log enabled.");
+        }
+    }
+
     void debugLog(String message) {
         if (mDebugLog) {
             Log.d(TAG, "GameHelper: " + message);
         }
+    }
+
+    /**
+     * Sign out and disconnect from the APIs
+     */
+    public void signOut() {
+        // Are we connected at the moment?
+        if (!mGoogleApiClient.isConnected()) {
+            debugLog("signOut(): Was already disconnected, ignoring request.");
+            return;
+        }
+
+        // For Plus, "
     }
 }
