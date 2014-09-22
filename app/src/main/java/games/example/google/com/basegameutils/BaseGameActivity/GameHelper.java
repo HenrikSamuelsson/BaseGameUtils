@@ -511,6 +511,22 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
             return;
         }
 
-        // For Plus, "
+        // For Plus, "signing out" means clearing the default account and then disconnecting.
+        if( 0 != (mRequestedClients & CLIENT_PLUS) ) {
+            debugLog("Clearing default account on PlusClient");
+            Plus.AccountApi.clearDefaultAccount(mGoogleApiClient);
+        }
+
+        // For the games client, signing out means calling signOut and disconnecting.
+        if( 0 != (mRequestedClients & CLIENT_GAMES) ) {
+            debugLog("Signing out from the Google API Client");
+            Games.signOut(mGoogleApiClient);
+        }
+
+        // Now all prepared to disconnect.
+        debugLog("Disconnecting client.");
+        mConnectOnStart = false;
+        mConnecting = false;
+        mGoogleApiClient.disconnect();
     }
 }
