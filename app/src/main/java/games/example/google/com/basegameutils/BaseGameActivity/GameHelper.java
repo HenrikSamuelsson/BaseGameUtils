@@ -18,6 +18,7 @@ package games.example.google.com.basegameutils.BaseGameActivity;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -528,5 +529,38 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         mConnectOnStart = false;
         mConnecting = false;
         mGoogleApiClient.disconnect();
+    }
+
+    /**
+     * Handling of activity result.
+     *
+     * Call this method from your Activity's onActivityResult callback. If the activity result
+     * is related to the sign-in process so will this be processed appropriately.
+     *
+     * @param requestCode TBD
+     * @param responseCode TBD
+     * @param intent TBD
+     */
+    public void onActivityResult(int requestCode, int responseCode, Intent intent) {
+        debugLog("onActivityResult: req = "
+                + (requestCode == RC_RESOLVE ? "RC_RESOLVE" : String.valueOf(requestCode))
+                + ", resp = "
+                + GameHelperUtils.activityResponseCodeToString(responseCode));
+
+        if(requestCode != RC_RESOLVE) {
+            debugLog("onActivityResult: request code not meant for us. Ignoring.");
+            return;
+        }
+
+        // No longer expecting a resolution.
+        mExpectingResolution = false;
+
+        if (!mConnecting) {
+            debugLog("onActivityResult: ignoring because we are not connecting.");
+            return;
+        }
+
+        // We're coming back from an activity that was launched te resolve a connection problem.
+        // Can for example be the sign-in UI.
     }
 }
