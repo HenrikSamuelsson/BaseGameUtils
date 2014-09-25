@@ -30,6 +30,7 @@ import com.google.android.gms.common.api.Api.ApiOptions.NoOptions;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.drive.Drive;
 import com.google.android.gms.games.Games;
+import com.google.android.gms.games.GamesActivityResultCodes;
 import com.google.android.gms.games.multiplayer.turnbased.TurnBasedMatch;
 import com.google.android.gms.games.request.GameRequest;
 import com.google.android.gms.plus.Plus;
@@ -562,5 +563,37 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
 
         // We're coming back from an activity that was launched te resolve a connection problem.
         // Can for example be the sign-in UI.
+        if (responseCode == Activity.RESULT_OK) {
+            // Ready to try to connect again.
+            debugLog("onAR: Resolution was RESULT_OK, so connecting current client again.");
+            connect();
+        } else if (responseCode == GamesActivityResultCodes.RESULT_RECONNECT_REQUIRED) {
+            debugLog("onAR: Resolution was reconnect required, so reconnecting.");
+            connect();
+        } else if (responseCode == Activity.RESULT_CANCELED) {
+            // User cancelled.
+            debugLog("onAR: Got an cancellation result, so disconnecting.");
+            mSignInCancelled = true;
+            mConnectOnStart = false;
+            mUserInitiatedSignIn = false;
+            mSignInFailureReason = null; // Cancelling is not a failure.
+            mConnecting = false;
+            mGoogleApiClient.disconnect();
+
+            // Increment number of cancellations.
+            int prevCancellations = getSignInCancellations();
+            int newCancellations = incrementSignInCancellations();
+            debugLog("onAR: # of cancellations " + prevCancellations + " --> "
+            + newCancellations + ", max cancellations is " + mMaxAutoSignInAttempts);
+
+            notifyListener(false);
+        } else {
+            // Whatever the problem we were trying to solve, it was not solved. So give up and show
+            // an error message.
+            debugLog("onAR: responsCode = "
+            + GameHelperUtils.activityResponseCodeToString(responseCode)
+            + ", so giving up.");
+            giveUp(new SignInFailureReason(mConnectionResult.getErrorCode(), responseCode));
+        }
     }
 }
