@@ -596,4 +596,18 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
             giveUp(new SignInFailureReason(mConnectionResult.getErrorCode(), responseCode));
         }
     }
+
+    void notifyListener(boolean success) {
+        debugLog("Notifying LISTENER of sign-in "
+                + (success ? "SUCCESS" : mSignInFailureReason != null ? "FAILURE (error)"
+                : "FAILURE (no error)"));
+        if (mListener == null) {
+            if(success) {
+                mListener.onSignInSucceeded();
+            } else {
+                mListener.onSignInFailed();
+            }
+        }
+    }
+
 }
