@@ -610,4 +610,63 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         }
     }
 
+    /**
+     * Starts a sign in initiated by the user. Can for example be called when the user clicks on a
+     * "Sign In" button. As a result, authentication/consent dialogs may show up. At the end of the
+     * process, the GameHelperListener's onSignInSucceeded() or SignInFailed() methods will be
+     * called.
+     */
+    public void beginUserInitiatedSignIn() {
+        debugLog("beginUserInitiatedSignIn: resetting attempt count.");
+        resetSignInCancellations();
+        mSignInCancelled = false;
+        mConnectOnStart = true;
+
+        if(mGoogleApiClient.isConnected()) {
+            // Nothing to do.
+            logWarn("beginUserInitiatedSignIn() called when already connected. "
+                    + "Calling listener directly to notify of success.");
+            notifyListener(true);
+            return;
+        } else if (mConnecting) {
+            logWarn("beginUserInitiatedSignIn() called when already connecting. "
+                    + "Be patient! You can only call this method after you get an "
+                    + "onSignInSucceeded() or onSignInFailed() callback. Suggestion: disable "
+                    + "the sign-in button on startup and also when it's clicked, and re-enable "
+                    + "when you get the callback.");
+            // ignore call (listener will get a callback when the connection
+            // process finishes)
+            return;
+        }
+        debugLog("Starting USER-INITATED sign-in flow.");
+        // Set flag indicating that the user is actively trying to sign in, so we know if to show
+        // appropriate dialogs in case of connection problems.
+        mUserInitiatedSignIn = true;
+
+        if (mConnectionResult != null) {
+            // We have a pending connection result from a previous failure to sign in. Start
+            // by handling this.
+            debugLog("beginUserInitiatedSignIn: continuing pending sign-in flow.");
+            mConnecting = true;
+            resolveConnectionResult();
+        } else {
+            // We don´t have a pending connection result, so start a new.
+            debugLog("beginUserInitiatedSignIn: starting new sign-in flow.");
+            mConnecting = true;
+            connect();
+        }
+    }
+
+    void connect() {
+        if (mGoogleApiClient.isConnected()) {
+            debugLog("Already connected.");
+            return;
+        }
+        debugLog("Starting connection.");
+        mConnecting = true;
+        mInvitation = null;
+        mTurnBasedMatch = null;
+        mGoogleApiClient.connect();
+    }
+
 }
