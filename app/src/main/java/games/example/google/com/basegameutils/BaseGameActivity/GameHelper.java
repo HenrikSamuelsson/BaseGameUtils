@@ -19,6 +19,7 @@ package games.example.google.com.basegameutils.BaseGameActivity;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -50,6 +51,9 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
     static final String TAG = "GameHelper";
+
+    private final String GAMEHELPER_SHARED_PREFS = "GAMEHELPER_SHARED_PREFS";
+    private final String KEY_SIGN_IN_CANCELLATIONS = "KEY_SIGN_IN_CANCELLATIONS";
 
     /**
      * Listener for events indicating success or failure of sign-in attempts.
@@ -727,6 +731,33 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         mUserInitiatedSignIn = false;
         mConnecting = false;
         notifyListener(true);
+    }
+
+    /**
+     * Gets the number of times the user has cancelled the sign-in flow in the life of the app.
+     *
+     * @return number of user sign-in cancellations
+     */
+    int getSignInCancellations() {
+        SharedPreferences sp = mAppContext.getSharedPreferences(
+                GAMEHELPER_SHARED_PREFS,Context.MODE_PRIVATE);
+        )
+        return sp.getInt(KEY_SIGN_IN_CANCELLATIONS, 0);
+    }
+
+    /**
+     * Increments the counter that keeps track of how many time the user has cancelled the sign-in
+     * flow.
+     *
+     * @return The new number of cancellations.
+     */
+    int incrementSignInCancellations() {
+        int cancellations = getSignInCancellations();
+        SharedPreferences.Editor editor = mAppContext.getSharedPreferences(
+                GAMEHELPER_SHARED_PREFS, Context.MODE_PRIVATE).edit();
+        editor.putInt(KEY_SIGN_IN_CANCELLATIONS, cancellations + 1);
+        editor.commit();
+        return cancellations + 1;
     }
 
 }
