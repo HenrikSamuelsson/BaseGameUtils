@@ -31,6 +31,8 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.drive.Drive;
 import com.google.android.gms.games.Games;
 import com.google.android.gms.games.GamesActivityResultCodes;
+import com.google.android.gms.games.multiplayer.Invitation;
+import com.google.android.gms.games.multiplayer.Multiplayer;
 import com.google.android.gms.games.multiplayer.turnbased.TurnBasedMatch;
 import com.google.android.gms.games.request.GameRequest;
 import com.google.android.gms.plus.Plus;
@@ -479,9 +481,34 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
 
     }
 
+    /**
+     * Called when successfully obtain a connection to a client.
+     */
     @Override
     public void onConnected(Bundle bundle) {
+        debugLog("onConnected: connected!");
 
+        if(bundle != null) {
+            debugLog("onConnected: connection information bundle provided, checking for invite");
+            Invitation inv = bundle.getParcelable(Multiplayer.EXTRA_INVITATION);
+            if(inv != null && inv.getInvitationId() != null) {
+                debugLog("onConnected: found a room invite.");
+                debugLog("onConnected: invitation ID = " + mInvitation.getInvitationId());
+                mInvitation = inv;
+            }
+
+            // Check if there are any requests pending?
+            mRequests = Games.Requests.getGameRequestsFromBundle(bundle);
+            if (!mRequests.isEmpty()) {
+                // We have requests in onConnected's information bundle.
+                debugLog("onConnected: found " + mRequests.size() + " request(s)");
+            }
+
+            debugLog("onConnected: checking for turn based match game information");
+            mTurnBasedMatch = bundle.getParcelable(Multiplayer.EXTRA_TURN_BASED_MATCH);
+        }
+
+        succeedSignIn();
     }
 
     @Override
@@ -657,6 +684,10 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         }
     }
 
+    /**
+     * Will do a API connect attempt and set relevant variables so that we know that we
+     * are connecting.
+     */
     void connect() {
         if (mGoogleApiClient.isConnected()) {
             debugLog("Already connected.");
@@ -667,6 +698,35 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         mInvitation = null;
         mTurnBasedMatch = null;
         mGoogleApiClient.connect();
+    }
+
+    /**
+     * Disconnects the API client, then connects again.
+     */
+    public void reconnectClient() {
+        if (!mGoogleApiClient.isConnected()) {
+            Log.w(TAG, "reconnectClient() called when client is not connected.");
+            // Handle this situation as a request to connect.
+            connect();
+        } else {
+            debugLog("Reconnecting client.");
+            mGoogleApiClient.reconnect();
+        }
+    }
+
+    /**
+     * Updates internal status to signed in.
+     *
+     * Changes relevant variables that keep track of sign in status and notifies listener that we
+     * are now signed in.
+     */
+    void succeedSignIn() {
+        debugLog("succeedSignIn: go!");
+        mSignInFailureReason = null;
+        mConnectOnStart = true;
+        mUserInitiatedSignIn = false;
+        mConnecting = false;
+        notifyListener(true);
     }
 
 }
