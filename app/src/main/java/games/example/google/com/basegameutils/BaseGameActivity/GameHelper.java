@@ -480,9 +480,56 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         return mRequests;
     }
 
+    /**
+     * Handling of connection failures.
+     *
+     * @param connectionResult information of why the connection attempt failed
+     */
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
+        debugLog("onConnectionFailed go!");
 
+        // Save the connection result for later reference.
+        mConnectionResult = result;
+
+        debugLog("Connection failure info:");
+        debugLog("    - code: "
+                + GameHelperUtils.errorCodeToString(mConnectionResult.getErrorCode()));
+        debugLog("    - resolvable: " + mConnectionResult.hasResolution());
+        debugLog("    - details: " + mConnectionResult.toString());
+
+        int cancellations = getSignInCancellations();
+        boolean shouldResolve = false;
+
+        // Check if we shall resolve or not.
+        if (mUserInitiatedSignIn) {
+            debugLog("onConnectionFailed: Will resolve because user initiated sign-in.");
+            shouldResolve = true;
+        } else if (mSignInCancelled) {
+            debugLog("onConnectionFailed: Will not resolve because user already cancelled once.");
+            shouldResolve = false;
+        } else if (cancellations < mMaxAutoSignInAttempts) {
+            debugLog("onConnectionFailed: Will resolve because have attempts left trying to auto" +
+                    " sign in.");
+            shouldResolve = true;
+        } else {
+            debugLog("onConnectionFailed: Will not resolve because have no attempts left trying to" +
+                    " auto sign in.");
+            shouldResolve = false;
+        }
+
+        if(shouldResolve) {
+            debugLog("onConnectionFailed: resolving problem");
+            // Resolve the connection result. This usually means showing a dialog or
+            // starting an Activity that will allow the user to give the appropriate
+            // consents so that sign-in can be successful.
+            resolveConnectionResult();
+        } else {
+            // Handling of the case that we shall not resolve.
+            // Will then wait for user to start next sign in.
+            mConnecting = false;
+            notifyListener(false);
+        }
     }
 
     /**
@@ -758,6 +805,16 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         editor.putInt(KEY_SIGN_IN_CANCELLATIONS, cancellations + 1);
         editor.commit();
         return cancellations + 1;
+    }
+
+    /**
+     * Reset the counter of how many times the user has cancelled the sign-in flow.
+     */
+    void resetSignInCancellations() {
+        SharedPreferences.Editor editor = mAppContext.getSharedPreferences(
+                GAMEHELPER_SHARED_PREFS, Context.MODE_PRIVATE).edit();
+        editor.putInt(KEY_SIGN_IN_CANCELLATIONS, 0);
+        editor.commit();
     }
 
 }
