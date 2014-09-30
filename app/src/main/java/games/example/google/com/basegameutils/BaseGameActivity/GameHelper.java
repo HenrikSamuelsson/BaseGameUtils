@@ -562,9 +562,15 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         succeedSignIn();
     }
 
+    /** Called when we are disconnected from the Google API client. */
     @Override
-    public void onConnectionSuspended(int i) {
-
+    public void onConnectionSuspended(int cause) {
+        debugLog("onConnectionSuspended, cause=" + cause);
+        disconnect();
+        mSignInFailureReason = null;
+        debugLog("Making extraordinary call to onSignInFailed callback");
+        mConnecting = false;
+        notifyListener(false);
     }
 
     /** Enables debug logging. */
@@ -815,6 +821,42 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
                 GAMEHELPER_SHARED_PREFS, Context.MODE_PRIVATE).edit();
         editor.putInt(KEY_SIGN_IN_CANCELLATIONS, 0);
         editor.commit();
+    }
+
+    /**
+     * Will disconnect the API client if it is connected.
+     */
+    public void disconnect() {
+        if (mGoogleApiClient.isConnected()) {
+            debugLog("Disconnecting client.");
+            mGoogleApiClient.disconnect();
+        } else {
+            Log.w(TAG,
+                    "disconnect() called when client was already disconnected.");
+        }
+    }
+
+    /**
+     * Give up on signing in due to an error.
+     *
+     * Shows the appropriate error message to the user, using a standard error
+     * dialog as appropriate to the cause of the error. That dialog will indicate
+     * to the user how the problem can be solved (for example,
+     * re-enable Google Play Services, upgrade to a new version, etc).
+     */
+    void giveUp(SignInFailureReason reason) {
+        mConnectOnStart = false;
+        disconnect();
+        mSignInFailureReason = reason;
+
+        if (reason.mActivityResultCode == GamesActivityResultCodes.RESULT_APP_MISCONFIGURED) {
+            // print debug info for the developer
+            GameHelperUtils.printMisconfiguredDebugInfo(mAppContext);
+        }
+
+        showFailureDialog();
+        mConnecting = false;
+        notifyListener(false);
     }
 
 }
