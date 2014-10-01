@@ -587,6 +587,14 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         }
     }
 
+    void logWarn(String message) {
+        Log.w(TAG, "!!! GameHelper WARNING: " + message);
+    }
+
+    void logError(String message) {
+        Log.e(TAG, "*** GameHelper ERROR: " + message);
+    }
+
     /**
      * Sign out and disconnect from the APIs
      */
@@ -857,6 +865,91 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         showFailureDialog();
         mConnecting = false;
         notifyListener(false);
+    }
+
+    public void showFailureDialog() {
+        if (mSignInFailureReason != null) {
+            int errorCode = mSignInFailureReason.getServiceErrorCode();
+            int actResp = mSignInFailureReason.getActivityResultCode();
+
+            if (mShowErrorDialogs) {
+                showFailureDialog(mActivity, actResp, errorCode);
+            } else {
+                debugLog("Not showing error dialog because mShowErrorDialogs==false. "
+                        + "" + "Error was: " + mSignInFailureReason);
+            }
+        }
+    }
+
+    /** Shows an error dialog that's appropriate for the failure reason. */
+    public static void showFailureDialog(Activity activity, int actResp,
+                                         int errorCode) {
+        if (activity == null) {
+            Log.e("GameHelper", "*** No Activity. Can't show failure dialog!");
+            return;
+        }
+        Dialog errorDialog = null;
+
+        switch (actResp) {
+            case GamesActivityResultCodes.RESULT_APP_MISCONFIGURED:
+                errorDialog = makeSimpleDialog(activity, GameHelperUtils.getString(
+                        activity, GameHelperUtils.R_APP_MISCONFIGURED));
+                break;
+            case GamesActivityResultCodes.RESULT_SIGN_IN_FAILED:
+                errorDialog = makeSimpleDialog(activity, GameHelperUtils.getString(
+                        activity, GameHelperUtils.R_SIGN_IN_FAILED));
+                break;
+            case GamesActivityResultCodes.RESULT_LICENSE_FAILED:
+                errorDialog = makeSimpleDialog(activity, GameHelperUtils.getString(
+                        activity, GameHelperUtils.R_LICENSE_FAILED));
+                break;
+            default:
+                // No meaningful Activity response code, so generate default Google
+                // Play services dialog
+                errorDialog = GooglePlayServicesUtil.getErrorDialog(errorCode,
+                        activity, RC_UNUSED, null);
+                if (errorDialog == null) {
+                    // get fallback dialog
+                    Log.e("GameHelper",
+                            "No standard error dialog available. Making fallback dialog.");
+                    errorDialog = makeSimpleDialog(
+                            activity,
+                            GameHelperUtils.getString(activity,
+                                    GameHelperUtils.R_UNKNOWN_ERROR)
+                                    + " "
+                                    + GameHelperUtils.errorCodeToString(errorCode));
+                }
+        }
+
+        errorDialog.show();
+    }
+
+    static Dialog makeSimpleDialog(Activity activity, String text) {
+        return (new AlertDialog.Builder(activity)).setMessage(text)
+                .setNeutralButton(android.R.string.ok, null).create();
+    }
+
+    static Dialog
+    makeSimpleDialog(Activity activity, String title, String text) {
+        return (new AlertDialog.Builder(activity)).setMessage(text)
+                .setTitle(title).setNeutralButton(android.R.string.ok, null)
+                .create();
+    }
+
+    public Dialog makeSimpleDialog(String text) {
+        if (mActivity == null) {
+            logError("*** makeSimpleDialog failed: no current Activity!");
+            return null;
+        }
+        return makeSimpleDialog(mActivity, text);
+    }
+
+    public Dialog makeSimpleDialog(String title, String text) {
+        if (mActivity == null) {
+            logError("*** makeSimpleDialog failed: no current Activity!");
+            return null;
+        }
+        return makeSimpleDialog(mActivity, title, text);
     }
 
 }
