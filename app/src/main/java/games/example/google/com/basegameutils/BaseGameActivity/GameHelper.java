@@ -952,4 +952,48 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
         return makeSimpleDialog(mActivity, title, text);
     }
 
+    // Represents the reason for a sign-in failure
+    public static class SignInFailureReason {
+        public static final int NO_ACTIVITY_RESULT_CODE = -100;
+        int mServiceErrorCode = 0;
+        int mActivityResultCode = NO_ACTIVITY_RESULT_CODE;
+
+        public int getServiceErrorCode() {
+            return mServiceErrorCode;
+        }
+
+        public int getActivityResultCode() {
+            return mActivityResultCode;
+        }
+
+        public SignInFailureReason(int serviceErrorCode, int activityResultCode) {
+            mServiceErrorCode = serviceErrorCode;
+            mActivityResultCode = activityResultCode;
+        }
+
+        public SignInFailureReason(int serviceErrorCode) {
+            this(serviceErrorCode, NO_ACTIVITY_RESULT_CODE);
+        }
+
+        @Override
+        public String toString() {
+            return "SignInFailureReason(serviceErrorCode:"
+                    + GameHelperUtils.errorCodeToString(mServiceErrorCode)
+                    + ((mActivityResultCode == NO_ACTIVITY_RESULT_CODE) ? ")"
+                    : (",activityResultCode:"
+                    + GameHelperUtils
+                    .activityResponseCodeToString(mActivityResultCode) + ")"));
+        }
+    }
+
+    // Not recommended for general use. This method forces the
+    // "connect on start" flag
+    // to a given state. This may be useful when using GameHelper in a
+    // non-standard
+    // sign-in flow.
+    public void setConnectOnStart(boolean connectOnStart) {
+        debugLog("Forcing mConnectOnStart=" + connectOnStart);
+        mConnectOnStart = connectOnStart;
+    }
+
 }
