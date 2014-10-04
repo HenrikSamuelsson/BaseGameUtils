@@ -564,7 +564,7 @@ public class GameHelper implements GoogleApiClient.ConnectionCallbacks,
             // Check if there are any requests pending?
             mRequests = Games.Requests.getGameRequestsFromBundle(bundle);
             if (!mRequests.isEmpty()) {
-                // We have requests in onConnected's information bundle.
+                // We have requests in onConnected information bundle.
                 debugLog("onConnected: found " + mRequests.size() + " request(s)");
             }
 
